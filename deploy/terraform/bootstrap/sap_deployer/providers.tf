@@ -30,6 +30,7 @@ provider "azurerm" {
 
     }
   }
+  skip_provider_registration = true
 }
 
 provider "azurerm" {
@@ -46,7 +47,8 @@ provider "azurerm" {
   }
   partner_id = "f94f50f2-2539-42f8-9c8e-c65b28c681f7"
 
-  alias           = "main"
+  alias                      = "main"
+  skip_provider_registration = true
 
 }
 
