@@ -398,7 +398,10 @@
         that:
           - "scs_instance_number != pas_instance_number"
         fail_msg:                      "Please ensure that the pas_instance_number is different from the scs_instance_number on standalone installation"
-      when:                            (ansible_play_hosts_all | length) == 1
+      when:
+        - (ansible_play_hosts_all | length) == 1
+        - node_tier == 'scs'
+        - node_tier == 'pas'
       tags:
         - 0.0-scs-pas-single
 
