@@ -133,10 +133,10 @@ locals {
                                            )
                                          ) : ""
 
-  web_subnet_deployed                  = local.web_subnet_exists ? (
+  web_subnet_deployed                  = var.infrastructure.virtual_networks.sap.subnet_web.defined ? (local.web_subnet_exists ? (
                                              data.azurerm_subnet.subnet_sap_web[0]) : (
                                              azurerm_subnet.subnet_sap_web[0]
-                                           )
+                                           )) : null
 
   ##############################################################################################
   #
