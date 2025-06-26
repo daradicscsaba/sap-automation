@@ -49,15 +49,10 @@ resource "azurerm_storage_account" "storage_tfstate" {
           }
 
 
-  # lifecycle {
-  #             ignore_changes = [tags]
-  #           }
-
-  # tags = {
-  #     "enable_firewall_for_keyvaults_and_storage" = local.enable_firewall_for_keyvaults_and_storage
-  #     "public_network_access_enabled" = var.storage_account_sapbits.public_network_access_enabled
-  #   }
-
+  lifecycle {
+              ignore_changes = [tags]
+            }
+  tags                                 = var.infrastructure.tags
 }
 
 data "azuread_client_config" "current" {}
@@ -166,7 +161,7 @@ resource "azurerm_private_endpoint" "storage_tfstate" {
                                              var.infrastructure.environment
                                            ),
                                            var.naming.resource_suffixes.storage_private_link_tf,
-                                           var.naming.resource_suffixes.nic
+                                           try(var.naming.resource_suffixes.private_endpoint_nic, var.naming.resource_suffixes.nic)
                                          ) : null
 
   private_service_connection {
@@ -224,7 +219,7 @@ resource "azurerm_private_endpoint" "table_tfstate" {
                                              var.infrastructure.environment
                                            ),
                                            var.naming.resource_suffixes.storage_private_link_tf,
-                                           var.naming.resource_suffixes.nic
+                                           try(var.naming.resource_suffixes.private_endpoint_nic, var.naming.resource_suffixes.nic)
                                          ) : null
 
   private_service_connection {
@@ -270,6 +265,18 @@ resource "azurerm_storage_container" "storagecontainer_tfstate" {
                                            )
 
   container_access_type                = "private"
+
+  lifecycle {
+    ignore_changes = [
+      # Introducing this lifecycle policy due to below issue triggering "-/+ destroy and then create replacement"
+      # when applying this version of SDAF on older versions, as part of LCM activities
+      # References:
+      # https://github.com/hashicorp/terraform-provider-azurerm/issues/27942
+      # https://github.com/hashicorp/terraform-provider-azurerm/pull/28784
+      storage_account_name,
+      storage_account_id
+    ]
+  }
 }
 
 data "azurerm_storage_container" "storagecontainer_tfstate" {
@@ -419,7 +426,7 @@ resource "azurerm_private_endpoint" "storage_sapbits" {
                                              var.infrastructure.environment
                                            ),
                                            var.naming.resource_suffixes.storage_private_link_sap,
-                                           var.naming.resource_suffixes.nic
+                                           try(var.naming.resource_suffixes.private_endpoint_nic, var.naming.resource_suffixes.nic)
                                          ) : null
 
   private_service_connection {
@@ -467,6 +474,17 @@ resource "azurerm_storage_container" "storagecontainer_sapbits" {
 
   container_access_type                = "private"
 
+  lifecycle {
+    ignore_changes = [
+      # Introducing this lifecycle policy due to below issue triggering "-/+ destroy and then create replacement"
+      # when applying this version of SDAF on older versions, as part of LCM activities
+      # References:
+      # https://github.com/hashicorp/terraform-provider-azurerm/issues/27942
+      # https://github.com/hashicorp/terraform-provider-azurerm/pull/28784
+      storage_account_name,
+      storage_account_id
+    ]
+  }
 }
 
 // Imports existing storage blob container for SAP bits
@@ -554,6 +572,17 @@ resource "azurerm_storage_container" "storagecontainer_tfvars" {
 
   container_access_type                = "private"
 
+  lifecycle {
+    ignore_changes = [
+      # Introducing this lifecycle policy due to below issue triggering "-/+ destroy and then create replacement"
+      # when applying this version of SDAF on older versions, as part of LCM activities
+      # References:
+      # https://github.com/hashicorp/terraform-provider-azurerm/issues/27942
+      # https://github.com/hashicorp/terraform-provider-azurerm/pull/28784
+      storage_account_name,
+      storage_account_id
+    ]
+  }
 }
 
 data "azurerm_storage_container" "storagecontainer_tfvars" {

@@ -178,13 +178,19 @@ locals {
                                               var.naming.separator,
                                               local.resource_suffixes.db_alb_feip
                                             )
-                                            subnet_id = var.database.scale_out ? var.admin_subnet.id :  var.db_subnet.id
+                                            subnet_id = var.database.scale_out && var.database_dual_nics && var.NFS_provider == "ANF" ? (
+                                              try(
+                                                var.admin_subnet.id,
+                                                var.landscape_tfstate.admin_subnet_id
+                                              )) : (
+                                                var.db_subnet.id
+                                              )
                                             private_ip_address = length(try(var.database.loadbalancer.frontend_ips[0], "")) > 0 ? (
                                               var.database.loadbalancer.frontend_ips[0]) : (
                                               var.database.use_DHCP ? (
                                                 null) : (
                                                 cidrhost(
-                                                  var.database.scale_out ? var.admin_subnet.address_prefixes[0] : var.db_subnet.address_prefixes[0],
+                                                  var.database.scale_out && var.database_dual_nics && var.NFS_provider == "ANF" ? var.admin_subnet.address_prefixes[0] : var.db_subnet.address_prefixes[0],
                                                   local.hdb_ip_offsets.hdb_lb
                                               ))
                                             )
@@ -197,13 +203,19 @@ locals {
                                               var.naming.separator,
                                               try(local.resource_suffixes.db_rlb_feip, "dbRlb-feip")
                                             )
-                                            subnet_id = var.database.scale_out ? var.admin_subnet.id : var.db_subnet.id
+                                            subnet_id = var.database.scale_out && var.database_dual_nics && var.NFS_provider == "ANF" ? (
+                                              try(
+                                                var.admin_subnet.id,
+                                                var.landscape_tfstate.admin_subnet_id
+                                              )) : (
+                                                var.db_subnet.id
+                                              )
                                             private_ip_address = length(try(var.database.loadbalancer.frontend_ips[1], "")) > 0 ? (
                                               var.database.loadbalancer.frontend_ips[0]) : (
                                               var.database.use_DHCP ? (
                                                 null) : (
                                                 cidrhost(
-                                                  var.database.scale_out ? var.admin_subnet.address_prefixes[0] :  var.db_subnet.address_prefixes[0],
+                                                  var.database.scale_out && var.database_dual_nics && var.NFS_provider == "ANF" ? var.admin_subnet.address_prefixes[0] :  var.db_subnet.address_prefixes[0],
                                                   local.hdb_ip_offsets.hdb_lb + 1
                                               ))
                                             )
@@ -468,7 +480,7 @@ locals {
   use_shared_volumes                   = local.use_avg || var.hana_ANF_volumes.use_for_shared && var.hana_ANF_volumes.use_existing_shared_volume
 
   #If using an existing VM for observer set use_observer to false in .tfvars
-  observer_size                        = "Standard_D4s_v3"
+  observer_vm_size                     = try(var.observer_vm_size, "Standard_D4s_v3")
   observer_authentication              = local.authentication
   observer_custom_image                = local.hdb_custom_image
   observer_custom_image_id             = local.enable_deployment ? local.hdb_os.source_image_id : ""
